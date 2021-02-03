@@ -13,7 +13,7 @@ date = datetime.datetime.now().date()
 
 def convertToSA(raw_grade):
     '''
-    Function to convert raw_grade to appropriate SA HW grade (0, 50, 70, 85, 100)
+    Converts raw_grade from EdPuzzle completion to appropriate SA HW grade (0, 50, 70, 85, 100)
     '''
 
     if raw_grade < 25.:
@@ -35,6 +35,7 @@ def edPuzzleCheck(advisory, path):
     '''
     This function checks all of the edpuzzle videos for one homeroom
     Returns a DF with column for scholar name, and a column of completion for each EP in the list
+    advisory - str, name of advisory to check, should matchdirectory name
     path - path to folder with csvs
     '''
     print(f'Getting EdPuzzle completion data for {advisory}, {path}')
@@ -104,6 +105,8 @@ def gradeEdPuzzles(advisory, path, save_csv=True):
             os.mkdir(os.path.join('grades', grades_folder))
         path_to_output = os.path.join('.', 'grades', grades_folder,f'{advisory}-grades-{date}.csv')
         df.to_csv(path_to_output)
+
+    return df
 
 
 def check_all_advisories():
