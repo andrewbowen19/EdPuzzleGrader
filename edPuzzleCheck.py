@@ -6,6 +6,7 @@ import pandas as pd
 import os
 from functools import reduce
 import datetime
+import numpy as np
 
 
 advisories = ['BOS', 'SHN', 'BNU-Cats', 'Casa-Amigos']
@@ -96,6 +97,7 @@ def gradeEdPuzzles(advisory, path, save_csv=True):
     df['SA Grade']= df['Average Completion %'].apply(convertToSA)
 
     print(f'{advisory} data for this week:\n', df)
+    print(f'{advisory} Class average:', np.mean(df['SA Grade']))
 
 
     if save_csv:
@@ -103,6 +105,7 @@ def gradeEdPuzzles(advisory, path, save_csv=True):
         grades_folder = f'grades-{date}'
         if not (os.path.join('grades', grades_folder)):
             os.mkdir(os.path.join('grades', grades_folder))
+            print(f'grades folder created! {grades_folder}')
         path_to_output = os.path.join('.', 'grades', grades_folder,f'{advisory}-grades-{date}.csv')
         df.to_csv(path_to_output)
 
