@@ -7,135 +7,184 @@ import os
 from functools import reduce
 import datetime
 import numpy as np
+import sys
+import argparse
 
 
 advisories = ['BOS', 'SHN', 'BNU-Cats', 'Casa-Amigos']
 date = datetime.datetime.now().date()
 
-def convertToSA(raw_grade):
-    '''
-    Converts raw_grade from EdPuzzle completion to appropriate SA HW grade (0, 50, 70, 85, 100)
-    '''
+# Adding argument parser
+# parser = argparse.ArgumentParser(description='Process some integers.')
+# parser.add_argument('--advisory', dest='accumulate', action='store_const',
+#                     const=sum, default=max,
+#                     help='sum the integers (default: find the max)')
 
-    if raw_grade < 25.:
-        return 0.
+class edPuzzleCheck(object):
 
-    elif 50. > raw_grade >= 25.:
-        return 50.
-
-    elif 70. > raw_grade >= 50.:
-        return 70.
-
-    elif 90. > raw_grade >= 70.:
-        return 85.
-
-    elif 100. >= raw_grade >= 90.:
-        return 100.
-
-def edPuzzleCheck(advisory, path):
-    '''
-    This function checks all of the edpuzzle videos for one homeroom
-    Returns a DF with column for scholar name, and a column of completion for each EP in the list
-    advisory - str, name of advisory to check, should matchdirectory name
-    path - path to folder with csvs
-    '''
-    print(f'Getting EdPuzzle completion data for {advisory}, {path}')
-    list_of_names = []
-    
-    # Going through each file in folder
-    for f in os.listdir(path):
-        df= pd.read_csv(os.path.join(path, f))
-
-        # Getting only kids who watched at least 90% of vids
-        df = df[df['Video watched (%)'] >=90]
-
-        # print(f'Grades for {f}', df)#, vid.columns)
-        list_of_names.append(set(df['First name']))
-
-    # getting intersection of completion logs -- kids who did each video above 90% completion
-    u = set.intersection(*list_of_names)
-    print(f'Kids who did them all in {advisory}:\n', u)
-    print('##############################\n')
+    def __init__(self):
+        self.advisories = advisories
+        self.today = datetime.datetime.now().date()
 
 
-def gradeEdPuzzles(advisory, path, save_csv=True):
-    '''
-    Function to grade edpuzzles over the course of a week
-    Returns df with columns for scholar name, Video completion per assignment, and average video completion
-    '''
-    
-    print(f'Grading EdPuzzles for {advisory} on ')
-    dfs = []
-    n = 1
-    for f in os.listdir(path):
-        assignment_name = f.replace('.csv', '')
-        dat = pd.read_csv(os.path.join(path, f))
+    def rename_files(self):
+        '''
+        Re-organizes file dump in files dir
+        '''
+        for root, dirs, files in os.walk('files', topdown=True):
+            print(root, dirs)
+            for f in files:
+                if '.csv' in f:
+                    old_path = os.path.join(root, f)
+                    new_file_name = f.replace(' ', '-')
+                    new_path = os.path.join(root, new_file_name)
+                    os.rename(old_path, new_path)
 
-        # Dropping unneeded columns
-        dat = dat.drop(['Role', 'Username', 'Time spent', 'Last watched', 'Time turned in', 'On time?'], axis=1)
-        # grade and Correct answers may change #s based on video
-        for col in dat.columns:
-            if 'Correct answers' in col or 'Grade' in col:
-                dat = dat.drop(col, axis=1)
+        # Creating directory for files to be graded
+        # Should be all dumped to files dir, this script handles the rest
+        for a in self.advisories:
+            self.path2create = os.path.join('files', f'input{a}-{self.today}')
+            if not os.path.isdir(self.path2create):
+                os.mkdir(self.path2create)
+            else:
+                print('date dir already exists')
+                pass
 
-        # Renaming columns for assignment
-        dat = dat.rename(columns={'Video watched (%)': f'Video-{n} % Watched'})
+            for f in os.listdir('files'):
+                if a in f and 'csv' in f:
+                    os.rename(os.path.join('files', f), os.path.join(self.path2create, f.replace(' ', '-')))
+        print(os.path.isdir('./files'))
 
-        dat['Scholar Name'] = dat['First name'] + ' ' + dat['Last name'] 
-        dat = dat.drop(['Last name', 'First name'], axis=1)
-        dat = dat.set_index('Scholar Name')
-        dfs.append(dat)
+    def convertToSA(self, raw_grade):
+        '''
+        Converts raw_grade from EdPuzzle completion to appropriate SA HW grade (0, 50, 70, 85, 100)
+        '''
 
-        n += 1
+        if raw_grade < 25.:
+            return 0.
 
-    # Concatenating previous dfs
-    df = pd.concat(dfs, axis=1)
-    df = df.loc[:,~df.columns.duplicated()] # Dropping duplicated Scholar Name columns
-    n_cols = len(df.columns)
+        elif 50. > raw_grade >= 25.:
+            return 50.
 
-    df['Average Completion %'] = df.mean(axis=1)
-    df['SA Grade']= df['Average Completion %'].apply(convertToSA)
+        elif 70. > raw_grade >= 50.:
+            return 70.
 
-    print(f'{advisory} data for this week:\n', df)
-    print(f'{advisory} Class average:', np.mean(df['SA Grade']))
+        elif 90. > raw_grade >= 70.:
+            return 85.
+
+        elif 100. >= raw_grade >= 90.:
+            return 100.
+
+    def edPuzzleCheck(self, advisory, path):
+        '''
+        This function checks all of the edpuzzle videos for one homeroom
+        Returns a DF with column for scholar name, and a column of completion for each EP in the list
+        advisory - str, name of advisory to check, should matchdirectory name
+        path - path to folder with csvs
+        '''
+        print(f'Getting EdPuzzle completion data for {advisory}, {path}')
+        list_of_names = []
+        
+        # Going through each file in folder
+        for f in os.listdir(path):
+            df= pd.read_csv(os.path.join(path, f))
+
+            # Getting only kids who watched at least 90% of vids
+            df = df[df['Video watched (%)'] >=90]
+
+            # print(f'Grades for {f}', df)#, vid.columns)
+            list_of_names.append(set(df['First name']))
+
+        # getting intersection of completion logs -- kids who did each video above 90% completion
+        u = set.intersection(*list_of_names)
+        print(f'Kids who did them all in {advisory}:\n', u)
+        print('##############################\n')
 
 
-    if save_csv:
+    def gradeEdPuzzles(self, advisory, path, save_csv=True):
+        '''
+        Function to grade edpuzzles over the course of a week
+        Returns df with columns for scholar name, Video completion per assignment, and average video completion
+        '''
+        
+        print(f'Grading EdPuzzles for {advisory} on {self.today}...')
+        dfs = []
+        n = 1
+        for f in os.listdir(path):
+            assignment_name = f.replace('.csv', '')
+            dat = pd.read_csv(os.path.join(path, f))
+
+            # Dropping unneeded columns
+            dat = dat.drop(['Role', 'Username', 'Time spent', 'Last watched', 'Time turned in', 'On time?'], axis=1)
+            # grade and Correct answers may change #s based on video
+            for col in dat.columns:
+                if 'Correct answers' in col or 'Grade' in col:
+                    dat = dat.drop(col, axis=1)
+
+            # Renaming columns for assignment
+            dat = dat.rename(columns={'Video watched (%)': f'Video-{n} % Watched'})
+
+            dat['Scholar Name'] = dat['First name'] + ' ' + dat['Last name'] 
+            dat = dat.drop(['Last name', 'First name'], axis=1)
+            dat = dat.set_index('Scholar Name')
+            dfs.append(dat)
+
+            n += 1
+
+        # Concatenating previous dfs
+        df = pd.concat(dfs, axis=1)
+        df = df.loc[:,~df.columns.duplicated()] # Dropping duplicated Scholar Name columns
+        n_cols = len(df.columns)
+
+        df['Average Completion %'] = df.mean(axis=1)
+        df['SA Grade']= df['Average Completion %'].apply(self.convertToSA)
+
+        print(f'{advisory} data for this week:\n', df)
+        print(f'{advisory} Class average:', np.mean(df['SA Grade']))
+
         # Saving to a csv in grades folder for this date
-        grades_folder = f'grades-{date}'
-        if not (os.path.join('grades', grades_folder)):
-            os.mkdir(os.path.join('grades', grades_folder))
-            print(f'grades folder created! {grades_folder}')
-        path_to_output = os.path.join('.', 'grades', grades_folder,f'{advisory}-grades-{date}.csv')
-        df.to_csv(path_to_output)
+        if save_csv:
+            grades_folder = f'grades-{date}'
+            # Creating output folder if needed
+            if not (os.path.isdir(os.path.join('grades', grades_folder))):
+                os.mkdir(os.path.join('grades', grades_folder))
+                print(f'grades folder created! {grades_folder}')
+            path_to_output = os.path.join('.', 'grades', grades_folder,f'{advisory}-grades-{self.today}.csv')
+            df.to_csv(path_to_output)
 
-    return df
+        return df
 
 
-def check_all_advisories():
-    '''
-    If all advisories desired, create grades files for each
-    '''
-    print(f'Checking all advisories grades for {date}...')
-    # 
-    for a in advisories:
-        path_to_folder = os.path.join('.', 'files', f'input{a}-{date}')
-        gradeEdPuzzles(a, path_to_folder, True)
+    def check_all_advisories(self):
+        '''
+        If all advisories desired, create grades files for each
+        '''
+        print(f'Checking all advisories grades for {date}...')
+        for a in advisories:
+            path_to_folder = self.path2create #os.path.join('.', 'files', f'input{a}-{self.today}')
+            self.gradeEdPuzzles(a, path_to_folder, True)
 
-def one_advisory(advisory):
-    '''
-    Check EdPuzzle grades for ONE adviusry
-    '''
-
-    path = os.path.join('.', 'files', advisory)
-    gradeEdPuzzles(advisory, path, True)
+    def one_advisory(self, advisory):
+        '''
+        Check EdPuzzle grades for ONE advisory
+        Pass advisory name as a string
+        '''
+        path = os.path.join('.', 'files', advisory)
+        self.gradeEdPuzzles(advisory, path, True)
 
 
 
 if __name__ == "__main__":
-    check_all_advisories()
+    ep = edPuzzleCheck()
+    ep.rename_files()
 
 
+    if sys.argv[1] in advisories:
+        ep.one_advisory(advisory = sys.argv[1])
+    else:
+        ep.check_all_advisories()
+
+    # print(sys.argv)
 
 
 
