@@ -59,21 +59,13 @@ class edPuzzleCheck(object):
         '''
         Converts raw_grade from EdPuzzle completion to appropriate SA HW grade (0, 50, 70, 85, 100)
         '''
-
-        if raw_grade < 25.:
-            return 0.
-
-        elif 50. > raw_grade >= 25.:
-            return 50.
-
-        elif 70. > raw_grade >= 50.:
-            return 70.
-
-        elif 90. > raw_grade >= 70.:
-            return 85.
-
-        elif 100. >= raw_grade >= 90.:
-            return 100.
+        # Grade ranges as keys, scaled SA score as vals
+        grade_map = {(0., 25.): 0., (25.0, 50.0): 50.0, (50., 70.0): 70.0, (70.0, 90.0): 85.0, (90.0, 100.0):100.0}
+        bins = list(grade_map.keys())
+        for b in bins:
+            if b[1] >= raw_grade >= b[0]:
+                print(grade_map[b])
+                return grade_map[b]
 
     def edPuzzleCheck(self, advisory, path):
         '''
@@ -87,7 +79,7 @@ class edPuzzleCheck(object):
         
         # Going through each file in folder
         for f in os.listdir(path):
-            df= pd.read_csv(os.path.join(path, f))
+            df = pd.read_csv(os.path.join(path, f))
 
             # Getting only kids who watched at least 90% of vids
             df = df[df['Video watched (%)'] >=90]
@@ -144,7 +136,7 @@ class edPuzzleCheck(object):
 
         # Saving to a csv in grades folder for this date
         if save_csv:
-            grades_folder = f'grades-{date}'
+            grades_folder = f'grades-{self.today}'
             # Creating output folder if needed
             if not (os.path.isdir(os.path.join('grades', grades_folder))):
                 os.mkdir(os.path.join('grades', grades_folder))
@@ -173,10 +165,9 @@ class edPuzzleCheck(object):
         self.gradeEdPuzzles(advisory, path, True)
 
 
-
 if __name__ == "__main__":
     ep = edPuzzleCheck()
-    ep.rename_files()
+    ep.rename_files() # Putting file dump into proper bins
 
 
     if sys.argv[1] in advisories:
@@ -184,7 +175,6 @@ if __name__ == "__main__":
     else:
         ep.check_all_advisories()
 
-    # print(sys.argv)
 
 
 
