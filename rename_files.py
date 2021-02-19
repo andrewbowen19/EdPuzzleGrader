@@ -1,3 +1,5 @@
+# DEPRECATED. USE THE rename_files method in edPuzzleCheck script
+
 # Script to get rid of spaces in edPuzzle filenames
 # Removes spaces from csv file names for pandas read-in
 

@@ -30,6 +30,7 @@ class edPuzzleCheck(object):
     def rename_files(self):
         '''
         Re-organizes file dump in files dir
+        Copy input csv files into 
         '''
         for root, dirs, files in os.walk('files', topdown=True):
             print(root, dirs)
@@ -40,20 +41,25 @@ class edPuzzleCheck(object):
                     new_path = os.path.join(root, new_file_name)
                     os.rename(old_path, new_path)
 
+        self.input_path = os.path.join('.', 'files', f'input-{self.today}')
+        if not os.path.isdir(self.input_path):
+            os.mkdir(self.input_path)
         # Creating directory for files to be graded
         # Should be all dumped to files dir, this script handles the rest
         for a in self.advisories:
-            self.path2create = os.path.join('files', f'input{a}-{self.today}')
+            print(f'Creating folder for {a}')
+            self.path2create = os.path.join(self.input_path, a)
             if not os.path.isdir(self.path2create):
                 os.mkdir(self.path2create)
             else:
                 print('date dir already exists')
                 pass
 
+            # Placing input csv files into advisory folders with new name
             for f in os.listdir('files'):
                 if a in f and 'csv' in f:
                     os.rename(os.path.join('files', f), os.path.join(self.path2create, f.replace(' ', '-')))
-        print(os.path.isdir('./files'))
+                    print('')
 
     def convertToSA(self, raw_grade):
         '''
@@ -64,7 +70,6 @@ class edPuzzleCheck(object):
         bins = list(grade_map.keys())
         for b in bins:
             if b[1] >= raw_grade >= b[0]:
-                print(grade_map[b])
                 return grade_map[b]
 
     def edPuzzleCheck(self, advisory, path):
@@ -97,6 +102,7 @@ class edPuzzleCheck(object):
         '''
         Function to grade edpuzzles over the course of a week
         Returns df with columns for scholar name, Video completion per assignment, and average video completion
+        Grades edPuzzle completion for one advisory
         '''
         
         print(f'Grading EdPuzzles for {advisory} on {self.today}...')
@@ -143,8 +149,9 @@ class edPuzzleCheck(object):
                 print(f'grades folder created! {grades_folder}')
             path_to_output = os.path.join('.', 'grades', grades_folder,f'{advisory}-grades-{self.today}.csv')
             df.to_csv(path_to_output)
+        print('###############################################')
 
-        return df
+        # return df
 
 
     def check_all_advisories(self):
@@ -152,8 +159,8 @@ class edPuzzleCheck(object):
         If all advisories desired, create grades files for each
         '''
         print(f'Checking all advisories grades for {date}...')
-        for a in advisories:
-            path_to_folder = self.path2create #os.path.join('.', 'files', f'input{a}-{self.today}')
+        for a in self.advisories:
+            path_to_folder = os.path.join(self.input_path, a)
             self.gradeEdPuzzles(a, path_to_folder, True)
 
     def one_advisory(self, advisory):
@@ -161,7 +168,7 @@ class edPuzzleCheck(object):
         Check EdPuzzle grades for ONE advisory
         Pass advisory name as a string
         '''
-        path = os.path.join('.', 'files', advisory)
+        path = os.path.join(input_path, advisory)
         self.gradeEdPuzzles(advisory, path, True)
 
 
@@ -169,8 +176,8 @@ if __name__ == "__main__":
     ep = edPuzzleCheck()
     ep.rename_files() # Putting file dump into proper bins
 
-
-    if sys.argv[1] in advisories:
+    args = len(sys.argv) -1
+    if args > 0:
         ep.one_advisory(advisory = sys.argv[1])
     else:
         ep.check_all_advisories()
