@@ -14,11 +14,6 @@ import argparse
 advisories = ['BOS', 'SHN', 'BNU-Cats', 'Casa-Amigos']
 date = datetime.datetime.now().date()
 
-# Adding argument parser
-# parser = argparse.ArgumentParser(description='Process some integers.')
-# parser.add_argument('--advisory', dest='accumulate', action='store_const',
-#                     const=sum, default=max,
-#                     help='sum the integers (default: find the max)')
 
 class edPuzzleCheck(object):
 
