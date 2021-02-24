@@ -9,6 +9,7 @@ import datetime
 import numpy as np
 import sys
 import argparse
+import matplotlib.pyplot as plt
 
 
 advisories = ['BOS', 'SHN', 'BNU-Cats', 'Casa-Amigos']
@@ -61,7 +62,11 @@ class edPuzzleCheck(object):
         Converts raw_grade from EdPuzzle completion to appropriate SA HW grade (0, 50, 70, 85, 100)
         '''
         # Grade ranges as keys, scaled SA score as vals
-        grade_map = {(0., 25.): 0., (25.0, 50.0): 50.0, (50., 70.0): 70.0, (70.0, 90.0): 85.0, (90.0, 100.0):100.0}
+        grade_map = {(0., 25.): 0.,
+                     (25.0, 50.0): 50.0,
+                     (50., 70.0): 70.0,
+                     (70.0, 90.0): 85.0,
+                     (90.0, 100.0):100.0}
         bins = list(grade_map.keys())
         for b in bins:
             if b[1] >= raw_grade >= b[0]:
@@ -165,6 +170,22 @@ class edPuzzleCheck(object):
         '''
         path = os.path.join(input_path, advisory)
         self.gradeEdPuzzles(advisory, path, True)
+
+    def create_hist(self, df):
+        '''
+        Create histogram from csv grade file
+        '''
+        f, (ax1, ax2) = plt.subplots(1,2)
+
+        ax1.hist(df['Average Completion %'])
+        ax2.hist(df['SA Grade'])
+
+        ax1.set_xlabel('Average Video Completion %')
+        ax2.set_xlabel('Grade')
+        plt.show()
+
+
+
 
 
 if __name__ == "__main__":
