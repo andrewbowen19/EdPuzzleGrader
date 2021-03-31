@@ -138,7 +138,10 @@ class edPuzzleCheck(object):
         df['SA Grade']= df['Average Completion %'].apply(self.convertToSA)
 
         print(f'{advisory} data for this week:\n', df)
-        print(f'{advisory} Class average:', np.mean(df['SA Grade']))
+        rounded_avg = round(np.mean(df['SA Grade']), 2)
+        std_dev = np.std(df['SA Grade'])
+        print(f'{advisory} Class average: {rounded_avg} %')
+        print(f'{advisory} Class std dev: {std_dev} %')
 
         # Saving to a csv in grades folder for this date
         if save_csv:
