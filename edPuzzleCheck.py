@@ -165,13 +165,14 @@ class edPuzzleCheck(object):
         for a in self.advisories:
             path_to_folder = os.path.join(self.input_path, a)
             self.gradeEdPuzzles(a, path_to_folder, True)
+            self.populate_export_template(a)
 
     def one_advisory(self, advisory):
         '''
         Check EdPuzzle grades for ONE advisory
         Pass advisory name as a string
         '''
-        path = os.path.join(input_path, advisory)
+        path = os.path.join(self.input_path, advisory)
         self.gradeEdPuzzles(advisory, path, True)
 
     def create_hist(self, df):
@@ -187,8 +188,41 @@ class edPuzzleCheck(object):
         ax2.set_xlabel('Grade')
         plt.show()
 
-
-
+    def populate_export_template(self, advisory):
+        """
+        Creates a copy and populates template grade imports for SIS
+        """
+        print("Creating SIS import doc...")
+        
+        grades_path = os.path.join('.', 'grades', f'grades-{self.today}',f'{advisory}-grades-{self.today}.csv')
+        grades = pd.read_csv(grades_path)
+        template_path = os.path.join('.', 'templates', f'{advisory}-template.csv')
+        df = pd.read_csv(template_path)
+        print(grades)
+        
+#         If name cols match (both sorted alphabetically by last name
+        if len(df) == len(grades):
+            df['Grade'] = grades['SA Grade']
+            print(df)
+        
+#        If a kid logs on with a non-SA account
+#        Need to figure out easier system
+        else:
+            print('Names do not match...')
+#            Need to figure out dropping non-SA accounts
+#            print(df.where(df.values==grades.values).notna())
+        
+#        Dumping to csv in export dir
+        export_folder = f'export-{self.today}'
+        # Creating output folder if needed
+        if not (os.path.isdir(os.path.join('export', export_folder))):
+            os.mkdir(os.path.join('export', export_folder))
+            print(f'export folder created! {export_folder}')
+        path_to_output = os.path.join('.', 'export', export_folder,f'{advisory}-grades-{self.today}.csv')
+        df.to_csv(path_to_output)
+        
+        
+        
 
 
 if __name__ == "__main__":
@@ -197,9 +231,11 @@ if __name__ == "__main__":
 
     args = len(sys.argv) -1
     if args > 0:
-        ep.one_advisory(advisory = sys.argv[1])
+#        ep.one_advisory(advisory = sys.argv[1])
+        ep.populate_export_template(advisory = sys.argv[1])
     else:
         ep.check_all_advisories()
+        
 
 
 
